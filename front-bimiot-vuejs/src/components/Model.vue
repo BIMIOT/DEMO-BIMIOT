@@ -1,11 +1,19 @@
 <template>
     <section>
+      <div>
         <input type="file" id="file-input" />
-        <p id="properties-text">
-            ID: 
-            {{ entityData }}
-        </p>
-        <div id="model" />
+        <!--        <v-icon id="play" icon="mdi-play-circle" />-->
+        <!--        <v-icon id="stop" icon="mdi-pause-circle" />-->
+        <v-btn id="play" v-on:click="start()" >Play</v-btn>
+
+        <v-btn id="stop" v-on:click="stop()">Stop</v-btn>
+      </div>
+
+      <p id="properties-text">
+        ID:
+        {{ entityData }}
+      </p>
+      <div id="model" />
     </section>
 </template>
 
@@ -75,7 +83,16 @@ export default {
             this.changeColor(relIDs.children[component], roomId, sensorId, material, manager, scene, modelID);
           }
         },
-
+        start: function() {
+          axios
+              .post('http://localhost:8082/api/start')
+              .then(response => (console.log(response)));
+        },
+        stop: function() {
+          axios
+              .post('http://localhost:8082/api/stop')
+              .then(response => (console.log(response)));
+        }
     },
     created: function() {
         console.log("Starting connection to WebSocket Server");
@@ -153,9 +170,6 @@ export default {
             axios
                 .post('http://localhost:8082/api/rooms', json)
                 .then(response => (console.log(response)));
-            axios
-                .post('http://localhost:8082/api/start')
-                .then(response => (console.log(response)));
           },
 
           false
@@ -174,10 +188,24 @@ export default {
 }
 
 #file-input {
-    position: absolute;
-    left: 0%;
-    top: 0%;
-    z-index: 100;
+  position: relative;
+  /*left: 10%;*/
+  /*top: 10%;*/
+  z-index: 10;
+}
+
+#play{
+  position: relative;
+  color: blue;
+  margin: 0.5em 0.5em 0.5em;
+  z-index: 10;
+}
+
+#stop{
+  position: relative;
+  color: blue;
+  margin: 0.5em 0.5em 0.5em;
+  z-index: 10;
 }
 
 #properties-text {

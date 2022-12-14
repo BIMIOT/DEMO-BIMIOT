@@ -13,9 +13,9 @@
 import { IfcViewerAPI } from 'web-ifc-viewer';
 import { MeshLambertMaterial } from "three";
 import axios from 'axios';
-import {CSS2DRenderer} from "three/examples/jsm/renderers/CSS2DRenderer";
 import * as SockJS from 'sockjs-client';
 import * as StompJs from '@stomp/stompjs';
+import { IFCSENSOR } from 'web-ifc';
 
 export default {
     name: 'Model',
@@ -35,7 +35,7 @@ export default {
         },
         sendMessage: function(message) {
             console.log(this.client);
-            this.client.send(message);
+            //this.client.send(message);
         },
         getSensors: async function(relIDs, rooms, manager, modelID) {
             if (relIDs.type === "IFCBUILDINGSTOREY") {
@@ -61,11 +61,6 @@ export default {
                 scene: scene,
                 removePrevious: true,
               });
-              let labelRenderer = new CSS2DRenderer();
-              labelRenderer.setSize( window.innerWidth, window.innerHeight );
-              labelRenderer.domElement.style.position = 'absolute';
-              labelRenderer.domElement.style.top = '0px';
-              labelRenderer.domElement.style.pointerEvents = 'none';
             }
             this.changeColor(relIDs.children[component], roomId, sensorId, material, manager, scene, modelID);
           }
@@ -74,7 +69,7 @@ export default {
     created: function() {
         console.log("Starting connection to WebSocket Server");
         let client = new StompJs.Client({
-          brokerURL: 'ws://localhost:8083/sensors-data-endpoint',
+          brokerURL: 'ws://0.0.0.0:8090/sensors-data-endpoint',
           debug: function (str) {
             console.log(str);
           },
@@ -89,7 +84,7 @@ export default {
           // to be used for each (re)connect
           client.webSocketFactory = function () {
             // Note that the URL is different from the WebSocket URL
-            return new SockJS('http://localhost:8083/sensors-data-endpoint');
+            return new SockJS('http://0.0.0.0:8090/sensors-data-endpoint');
           };
         }
 
@@ -121,9 +116,6 @@ export default {
       viewer.axes.setAxes();
       viewer.grid.setGrid();
       viewer.IFC.setWasmPath('../IFCjs/');
-      const textElement = document.createElement('p');
-      textElement.innerText = 'This is some text';
-      document.querySelector("#model").appendChild(textElement);
 
       const input = document.getElementById("file-input");
 
@@ -134,7 +126,7 @@ export default {
             const ifcURL = URL.createObjectURL(file);
             const model = await viewer.IFC.loadIfcUrl(ifcURL);
             const structure = await this.showStructure(viewer, model.modelID);
-            //console.log(viewer.context.getDomElement());
+            //console.log(await viewer.IFC.getAllItemsOfType(model.modelID, IFCSENSOR, true));
             this.sendMessage('hello');
             let json = {rooms:[]};
             await this.getSensors(structure, json.rooms, viewer.IFC.loader.ifcManager, model.modelID);

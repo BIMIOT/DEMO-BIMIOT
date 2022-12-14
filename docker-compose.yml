@@ -1,0 +1,24 @@
+version: '3.6'
+services:
+  back:
+    build: ./back-bimiot-springboot
+    image: springio/gs-spring-boot-docker
+    container_name: bimiot-backend
+    ports:
+      - 8090:8090
+    networks:
+      - frontback
+
+  front:
+    build: ./front-bimiot-vuejs
+    image: vuejs/dockerize-vuejs-app
+    ports:
+      - 8081:8081
+    depends_on:
+      - back
+    networks:
+      - frontback
+
+networks:
+  frontback:
+    driver: bridge

@@ -1,11 +1,22 @@
 <template>
     <section>
+      <div>
         <input type="file" id="file-input" />
+<!--        <v-icon id="play" icon="mdi-play-circle" />-->
+<!--        <v-icon id="stop" icon="mdi-pause-circle" />-->
+        <v-btn id="play" onclick="this.created" >Play</v-btn>
+
+        <v-btn id="stop">Stop</v-btn>
+      </div>
+
         <p id="properties-text">
             ID: 
             {{ entityData }}
         </p>
-        <div id="model" />
+      <div id="model" />
+
+
+
     </section>
 </template>
 
@@ -70,6 +81,9 @@ export default {
             this.changeColor(relIDs.children[component], roomId, sensorId, material, manager, scene, modelID);
           }
         }
+
+
+
     },
     created: function() {
         console.log("Starting connection to WebSocket Server");
@@ -177,10 +191,24 @@ export default {
 }
 
 #file-input {
-    position: absolute;
-    left: 0%;
-    top: 0%;
-    z-index: 100;
+    position: relative;
+    /*left: 10%;*/
+    /*top: 10%;*/
+    z-index: 10;
+}
+
+#play{
+  position: relative;
+  color: blue;
+  margin: 0.5em 0.5em 0.5em;
+  z-index: 10;
+}
+
+#stop{
+  position: relative;
+  color: blue;
+  margin: 0.5em 0.5em 0.5em;
+  z-index: 10;
 }
 
 #properties-text {

@@ -10,6 +10,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
+import java.util.Random;
 import java.util.concurrent.*;
 
 @Component
@@ -34,7 +35,7 @@ public class Simulator {
         Runnable runnableTask = () -> {
             // bdd call to get raw data about a sensor
             System.out.println("hello");
-            var sensorFromBdd = new SensorSim("M_Table-Dining Round w Chairs:0915mm Diameter:165477", SensorType.TEMPERATURE,1608208221, 20);
+            var sensorFromBdd = new SensorSim("M_Table-Dining Round w Chairs:0915mm Diameter:165477", SensorType.TEMPERATURE,1608208221, new Random().nextInt(19,21));
             publishCustomEvent(sensorFromBdd);
         };
         executorService.scheduleAtFixedRate(runnableTask, 1,2 ,TimeUnit.SECONDS);

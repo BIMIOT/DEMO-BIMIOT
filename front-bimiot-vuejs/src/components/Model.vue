@@ -23,7 +23,7 @@ import { MeshLambertMaterial } from "three";
 import axios from 'axios';
 import * as SockJS from 'sockjs-client';
 import * as StompJs from '@stomp/stompjs';
-import { IFCSENSOR } from 'web-ifc';
+import { IFCSENSOR, IFCSENSORTYPE } from 'web-ifc';
 
 export default {
     name: 'Model',
@@ -126,6 +126,7 @@ export default {
             }
             const scene = this.viewer.context.getScene();
             const manager = this.viewer.IFC.loader.ifcManager;
+            console.log(response["value"]);
             this.changeColor(this.structure, 138, response["sensorIfcID"], response["value"] === 20 ? this.preSelectMat : this.preSelectMatBlue, manager, scene, this.model.modelID);
           });
 
@@ -163,7 +164,7 @@ export default {
             this.model = model;
             const structure = await this.showStructure(viewer, model.modelID);
             this.structure = structure;
-            //console.log(await viewer.IFC.getAllItemsOfType(model.modelID, IFCSENSOR, true));
+            console.log(await viewer.IFC.getAllItemsOfType(model.modelID, IFCSENSORTYPE, true));
             let json = {rooms:[]};
             await this.getSensors(structure, json.rooms, viewer.IFC.loader.ifcManager, model.modelID);
             console.log(JSON.stringify(json));

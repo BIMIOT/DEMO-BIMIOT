@@ -24,6 +24,21 @@ export default {
         return {
             entityData: '',
             client: undefined,
+            viewer: undefined,
+            model: undefined,
+            structure: undefined,
+          preSelectMat: new MeshLambertMaterial({
+            transparent: true,
+            opacity: 0.6,
+            color: 0xff0000,
+            depthTest: false,
+          }),
+          preSelectMatBlue: new MeshLambertMaterial({
+            transparent: true,
+            opacity: 0.6,
+            color: 0x00FFFF,
+            depthTest: false,
+          }),
         }
     },
     methods: {
@@ -33,10 +48,6 @@ export default {
             console.log(relIDs);
             return relIDs;
         },
-        sendMessage: function(message) {
-            console.log(this.client);
-            //this.client.send(message);
-        },
         getSensors: async function(relIDs, rooms, manager, modelID) {
             if (relIDs.type === "IFCBUILDINGSTOREY") {
                 const sensorList = [];
@@ -45,7 +56,6 @@ export default {
             for (let component in relIDs.children) {
                 if (relIDs.type === "IFCBUILDINGSTOREY" && relIDs.children[component].type === "IFCFURNISHINGELEMENT") {
                     const sensor = await manager.getItemProperties(modelID, relIDs.children[component].expressID);
-                    console.log(sensor);
                     rooms[rooms.length-1].sensors.push({sensorIFCid:relIDs.children[component].expressID, sensorDataSetId:sensor.Name.value});
                 }
                await this.getSensors(relIDs.children[component], rooms, manager, modelID);
@@ -64,14 +74,15 @@ export default {
             }
             this.changeColor(relIDs.children[component], roomId, sensorId, material, manager, scene, modelID);
           }
-        }
+        },
+
     },
     created: function() {
         console.log("Starting connection to WebSocket Server");
         let client = new StompJs.Client({
-          brokerURL: 'ws://0.0.0.0:8090/sensors-data-endpoint',
+          brokerURL: 'ws://localhost:8082/sensors-data-endpoint',
           debug: function (str) {
-            console.log(str);
+            //console.log(str);
           },
           reconnectDelay: 5000,
           heartbeatIncoming: 4000,
@@ -84,17 +95,23 @@ export default {
           // to be used for each (re)connect
           client.webSocketFactory = function () {
             // Note that the URL is different from the WebSocket URL
-            return new SockJS('http://0.0.0.0:8090/sensors-data-endpoint');
+            return new SockJS('http://localhost:8082/sensors-data-endpoint');
           };
         }
 
-
-        client.onConnect = function (frame) {
+        client.onConnect = (frame) => {
           // Do something, all subscribes must be done is this callback
           // This is needed because this will be executed after a (re)connect
-          client.subscribe('/data/sensors', function (greeting) {
-            console.log(JSON.parse(greeting.body));
+          client.subscribe('/data/sensors', (greeting) => {
+            const response = JSON.parse(greeting.body);
+            if (this.model === undefined) {
+              return;
+            }
+            const scene = this.viewer.context.getScene();
+            const manager = this.viewer.IFC.loader.ifcManager;
+            this.changeColor(this.structure, 138, response["sensorIfcID"], response["value"] === 20 ? this.preSelectMat : this.preSelectMatBlue, manager, scene, this.model.modelID);
           });
+
           console.log("Successfully subscribed to the backend server...");
         };
 
@@ -113,6 +130,7 @@ export default {
     mounted() {
       const container = document.getElementById('model');
       const viewer = new IfcViewerAPI({ container });
+      this.viewer = viewer;
       viewer.axes.setAxes();
       viewer.grid.setGrid();
       viewer.IFC.setWasmPath('../IFCjs/');
@@ -125,36 +143,23 @@ export default {
             const file = changed.target.files[0];
             const ifcURL = URL.createObjectURL(file);
             const model = await viewer.IFC.loadIfcUrl(ifcURL);
+            this.model = model;
             const structure = await this.showStructure(viewer, model.modelID);
+            this.structure = structure;
             //console.log(await viewer.IFC.getAllItemsOfType(model.modelID, IFCSENSOR, true));
-            this.sendMessage('hello');
             let json = {rooms:[]};
             await this.getSensors(structure, json.rooms, viewer.IFC.loader.ifcManager, model.modelID);
             console.log(JSON.stringify(json));
-            const preSelectMat = new MeshLambertMaterial({
-              transparent: true,
-              opacity: 0.6,
-              color: 0xff0000,
-              depthTest: false,
-            });
-            const preSelectMatBlue = new MeshLambertMaterial({
-              transparent: true,
-              opacity: 0.6,
-              color: 0x00FFFF,
-              depthTest: false,
-            });
-            const scene = viewer.context.getScene();
-            const manager = viewer.IFC.loader.ifcManager;
-            setTimeout(() => {  this.changeColor(structure, 138, 1, preSelectMat, manager, scene, model.modelID); }, 2000);
-            //setTimeout(() => {  this.changeColor(structure, 138, 1, preSelectMatBlue, manager, scene, model.modelID); }, 4000);
+            axios
+                .post('http://localhost:8082/api/rooms', json)
+                .then(response => (console.log(response)));
+            axios
+                .post('http://localhost:8082/api/start')
+                .then(response => (console.log(response)));
           },
 
           false
       );
-
-      axios
-        .get('https://api.coindesk.com/v1/bpi/currentprice.json')
-        .then(response => (console.log(response)));
     },
 }
 </script>

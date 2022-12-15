@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "export NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service serve",
+    "serve": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service serve",
     "build": "export NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service build",
     "preserve": "cpy ./node_modules/web-ifc/web-ifc.wasm public/IFCjs cpy ./node_modules/web-ifc-three/IFCWorker.js public/IFCjs cpy ./node_modules/web-ifc-three/IFCWorker.js.map public/IFCjs"
   },

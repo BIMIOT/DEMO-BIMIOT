@@ -26,21 +26,21 @@ public class MyController {
         applicationEventPublisher.publishEvent(new RoomHashMapEvent(this,rooms));
     }
     @PostMapping("/rooms")
-    @CrossOrigin(origins = "http://localhost:8081")
+    @CrossOrigin(origins = "http://localhost:8080")
     public void storeSensorsByRooms(@RequestBody Map<String, List<Room>> body) {
         var rooms = body.get("rooms");
         publishCustomEvent(rooms);
     }
 
     @PostMapping("/start")
-    @CrossOrigin(origins = "http://localhost:8081")
+    @CrossOrigin(origins = "http://localhost:8080")
     public void start() {
         System.out.println("lancement");
        simulatorController.start();
     }
 
     @PostMapping("/stop")
-    @CrossOrigin(origins = "http://localhost:8081")
+    @CrossOrigin(origins = "http://localhost:8080")
     public void stop() {
         simulatorController.stop();
     }

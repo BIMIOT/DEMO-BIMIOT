@@ -23,9 +23,9 @@ import { MeshLambertMaterial } from "three";
 import axios from 'axios';
 import * as SockJS from 'sockjs-client';
 import * as StompJs from '@stomp/stompjs';
-import { IFCSENSOR, IFCSPACE, IFCOPENINGELEMENT, IFCFURNISHINGELEMENT, IFCDISTRIBUTIONCONTROLELEMENT, IFCSENSORTYPE } from 'web-ifc';
+import { IFCSPACE,IFCSLAB,IFCOPENINGELEMENT, IFCDISTRIBUTIONCONTROLELEMENT, IFCWALLSTANDARDCASE } from 'web-ifc';
 import {IfcAPI} from "three/examples/jsm/loaders/ifc/web-ifc-api";
-
+import * as THREE from "three";
 export default {
     name: 'Model',
     props: ['token', 'projectId', 'discipline'],
@@ -38,18 +38,24 @@ export default {
             structure: undefined,
           invisibleMat: new MeshLambertMaterial({
             transparent: true,
-            opacity: 0.6,
-            color: 0xff0000
-          }),
-          preSelectMat: new MeshLambertMaterial({
-            transparent: true,
-            opacity: 0.3,
+            opacity: 0,
             color: 0xff0000,
             depthTest: false,
           }),
+          preSelectMat: new MeshLambertMaterial({
+            transparent: true,
+            opacity: 0.6,
+            color: 0xff0000,
+            depthTest: false,
+          }),
+          sensorColor: new MeshLambertMaterial({
+            transparent: false,
+            opacity: 1,
+            color: 0xfcba03,
+          }),
           preSelectMatBlue: new MeshLambertMaterial({
             transparent: true,
-            opacity: 0.3,
+            opacity: 0.6,
             color: 0x00FFFF,
             depthTest: false,
           }),
@@ -57,6 +63,20 @@ export default {
         }
     },
     methods: {
+      newSubsetOfType: async function (viewer,category) {
+        const manager = viewer.IFC.loader.ifcManager;
+        const ids = await manager.getAllItemsOfType(0, category, false);
+        console.log(ids);
+
+        return manager.createSubset({
+          modelID: 0,
+          scene: this.viewer.context.getScene(),
+          ids: [722],
+          applyBVH: true,
+          removePrevious: true,
+          customID: category.toString(),
+        });
+      },
         showStructure: async function(viewer, modelID) {
             const manager = viewer.IFC.loader.ifcManager;
             const relIDs = await manager.getSpatialStructure(modelID);
@@ -118,20 +138,11 @@ export default {
               return;
             }
             console.log(response["sensorIfcID"]);
-            if (response["sensorIfcID"] === 283) {
               if (response["value"] === 20) {
-                changeColor(this.structure, 201, response["sensorIfcID"], this.preSelectMat, this.preSelectMatBlue, 1);
+                changeColor(this.structure, response["sensorIfcID"], this.preSelectMat, this.preSelectMatBlue);
               } else {
-                changeColor(this.structure, 201, response["sensorIfcID"], this.preSelectMatBlue, this.preSelectMat, 1);
+                changeColor(this.structure, response["sensorIfcID"], this.preSelectMatBlue, this.preSelectMat);
               }
-            }
-            if (response["sensorIfcID"] === 722) {
-              if (response["value"] === 20) {
-                changeColor(this.structure, 234, response["sensorIfcID"], this.preSelectMat, this.preSelectMatBlue, 2);
-              } else {
-                changeColor(this.structure, 234, response["sensorIfcID"], this.preSelectMatBlue, this.preSelectMat, 2);
-              }
-            }
 
          });
 
@@ -150,32 +161,22 @@ export default {
         client.activate();
         this.client = client;
 
-      const changeColor = (relIDs, roomId, sensorId, material, previousMaterial, groupId) => {
-        const manager = this.viewer.IFC.loader.ifcManager;
-        manager.removeSubset(this.model.modelID, previousMaterial, groupId);
-        manager.createSubset({
-          modelID: this.model.modelID,
-          ids: [roomId],
-          material: material,
-          scene: this.viewer.context.getScene(),
-          removePrevious: false,
-          customID: groupId
-        });
-/*        for (let component in relIDs.children) {
-          if (relIDs.expressID === roomId && relIDs.children[component].type === "IFCSPACE") {
+      const changeColor = (relIDs, sensorId, material, previousMaterial) => {
+        for (let component in relIDs.children) {
+          if (relIDs.type === "IFCSPACE" && relIDs.children[component].expressID === parseInt(sensorId,10)) {
             const manager = this.viewer.IFC.loader.ifcManager;
-            manager.removeSubset(this.model.modelID, previousMaterial, groupId);
+            manager.removeSubset(this.model.modelID, previousMaterial, relIDs.expressID);
             manager.createSubset({
               modelID: this.model.modelID,
-              ids: [relIDs.children[component].expressID],
+              ids: [relIDs.expressID],
               material: material,
               scene: this.viewer.context.getScene(),
               removePrevious: false,
-              customID: groupId
+              customID: relIDs.expressID
             });
           }
-          changeColor(relIDs.children[component], roomId, sensorId, material, previousMaterial);
-        }*/
+          changeColor(relIDs.children[component], sensorId, material, previousMaterial);
+        }
       }
     },
     mounted() {
@@ -185,11 +186,10 @@ export default {
       viewer.axes.setAxes();
       viewer.grid.setGrid();
       viewer.IFC.setWasmPath('../IFCjs/');
-     // const ifcapi = new IfcAPI();
-/*      viewer.IFC.loader.ifcManager.parser.setupOptionalCategories({
-        [IFCSPACE]: false,
+     viewer.IFC.loader.ifcManager.parser.setupOptionalCategories({
+        [IFCSPACE]: true,
         [IFCOPENINGELEMENT]: false
-      });*/
+      });
 
       const input = document.getElementById("file-input");
 
@@ -201,47 +201,87 @@ export default {
             const ifcURL = URL.createObjectURL(file);
             const model = await viewer.IFC.loadIfcUrl(ifcURL);
             this.model = model;
+            model.removeFromParent();
+          
             const structure = await this.showStructure(viewer, model.modelID);
             this.structure = structure;
-            console.log(await viewer.IFC.getProperties(model.modelID, 283, true));
+            //console.log(await viewer.IFC.getProperties(model.modelID, 283, true));
+
+            
             const spaces = await viewer.IFC.getAllItemsOfType(model.modelID, IFCSPACE, true);
+            /**
+             * HERE IS THE CODE YOU WANT IT START FROM HERE 
+             * */
+            const floor = {
+              modelID: model.modelID,
+              ids: await viewer.IFC.loader.ifcManager.getAllItemsOfType(model.modelID,IFCSLAB,false),
+              removePrevious: true,
+              customID:"stuff"
+            }
+
+            const sensor = {
+              modelID: model.modelID,
+              ids: await viewer.IFC.loader.ifcManager.getAllItemsOfType(model.modelID,IFCDISTRIBUTIONCONTROLELEMENT,false),
+              material: this.sensorColor,
+              removePrevious: true,
+              customID:"stuff2"
+            }
+
+            const wall = {
+              modelID: model.modelID,
+              ids: await viewer.IFC.loader.ifcManager.getAllItemsOfType(model.modelID,IFCWALLSTANDARDCASE,false),
+              removePrevious: true,
+              customID:"stuff3"
+            }
+
+            /* Useless : we don't need it, we color space only when we receive values
+            const space = {
+              modelID: model.modelID,
+              ids: await viewer.IFC.loader.ifcManager.getAllItemsOfType(model.modelID,IFCSPACE,false),
+              removePrevious: true,
+              material: this.invisibleMat,
+              customID:"stuff4"
+            }*/
+
+            var floors = await viewer.IFC.loader.ifcManager.createSubset(floor);
+            var sensors = await viewer.IFC.loader.ifcManager.createSubset(sensor);
+            var walls = await viewer.IFC.loader.ifcManager.createSubset(wall);
+            //var sp = await viewer.IFC.loader.ifcManager.createSubset(space);
+
+
             const manager = this.viewer.IFC.loader.ifcManager;
             for (const space in spaces) {
 
-              //console.log(await ifcapi.GetGeometry(model.modelID, spaces[space]));
-              manager.createSubset({
-                modelID: this.model.modelID,
-                ids: [spaces[space]],
-                material: this.invisibleMat,
-                scene: this.viewer.context.getScene(),
-                removePrevious: false,
-              });
+              console.log(spaces[space])
+
             }
+
             let json = {rooms:[]};
             await this.getSensors(structure, json.rooms, manager, model.modelID);
-            console.log(JSON.stringify(json));
-            //model.visible = false;
 
-            const modelCopy = new Mesh(
-                model.geometry,
-                new MeshLambertMaterial({
-                  transparent: true,
-                  opacity: 1,
-                  color: 0x77aaff,
-                })
-            );
+            console.log(JSON.stringify(json));
+
+            window.onclick = async () => {
+              //const {modelID, id} = await viewer.IFC.selector.pickIfcItem(true);
+             // const props = await viewer.IFC.getProperties(model.modelID, id, true, false);
+              //await viewer.IFC.selector.highlightIfcItem(false)
+              //console.log(props);
+            }
+
+            function get_random (list) {
+              return list[Math.floor((Math.random()*list.length))];
+            }
+
 
             const scene = this.viewer.context.getScene();
+            scene.add(floors);
+            scene.add(sensors);
+            scene.add(walls);
+            //scene.add(sp);
 
-            scene.add(model);
-            scene.add(modelCopy);
-/*            manager.createSubset({
-              modelID: this.model.modelID,
-              ids: [201],
-              material: this.preSelectMat,
-              scene: this.viewer.context.getScene(),
-              removePrevious: false,
-            });*/
+            const strcture = await viewer.IFC.getSpatialStructure(model.modelID);
+            console.log("hello ",strcture);
+
             axios
                 .post('http://localhost:8082/api/rooms', json)
                 .then(response => (console.log(response)));

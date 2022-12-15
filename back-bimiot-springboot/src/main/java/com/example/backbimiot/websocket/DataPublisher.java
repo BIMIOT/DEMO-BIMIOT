@@ -27,10 +27,7 @@ public class DataPublisher implements ApplicationListener<ConverterEvent> {
 
     //@Scheduled(fixedDelay = 10000)
     public void sendPeriodicMessages(ConverterEvent event) {
-        /*String jsonString = new JSONObject()
-                .put("roomId", "1B080")
-                .put("sensorIFCID", 12034)
-                .toString();*/
-        this.messageSendingOperations.convertAndSend("/data/sensors", event);
+
+        this.messageSendingOperations.convertAndSend("/data/sensors", event.getMessage());
     }
 }

@@ -16,10 +16,10 @@ import java.util.concurrent.*;
 @Component
 public class Simulator {
 
-    private final ScheduledExecutorService executorService;
+    private ScheduledExecutorService executorService;
 
     public Simulator() {
-        this.executorService = Executors.newSingleThreadScheduledExecutor();
+
     }
 
     @Autowired
@@ -32,10 +32,17 @@ public class Simulator {
     }
 
     public void start() {
+        this.executorService = Executors.newSingleThreadScheduledExecutor();
         Runnable runnableTask = () -> {
             // bdd call to get raw data about a sensor
             System.out.println("hello");
-            var sensorFromBdd = new SensorSim("M_Table-Dining Round w Chairs:0915mm Diameter:165477", SensorType.TEMPERATURE,1608208221, new Random().nextInt(19,21));
+            SensorSim sensorFromBdd;
+            var rand = new Random().nextInt(1,3);
+            if (rand == 1) {
+                sensorFromBdd = new SensorSim("sensor:sensor:143759", SensorType.TEMPERATURE,1608208221, new Random().nextInt(19,21));
+            } else {
+                sensorFromBdd = new SensorSim("sensor4:sensor:146504", SensorType.TEMPERATURE,1608208221, new Random().nextInt(19,21));
+            }
             publishCustomEvent(sensorFromBdd);
         };
         executorService.scheduleAtFixedRate(runnableTask, 1,2 ,TimeUnit.SECONDS);

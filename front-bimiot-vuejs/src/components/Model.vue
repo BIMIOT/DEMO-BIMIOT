@@ -23,7 +23,8 @@ import { MeshLambertMaterial } from "three";
 import axios from 'axios';
 import * as SockJS from 'sockjs-client';
 import * as StompJs from '@stomp/stompjs';
-import { IFCSENSOR, IFCSENSORTYPE } from 'web-ifc';
+import { IFCSENSOR, IFCSPACE, IFCOPENINGELEMENT, IFCFURNISHINGELEMENT, IFCDISTRIBUTIONCONTROLELEMENT, IFCSENSORTYPE } from 'web-ifc';
+import {IfcAPI} from "three/examples/jsm/loaders/ifc/web-ifc-api";
 
 export default {
     name: 'Model',
@@ -35,18 +36,24 @@ export default {
             viewer: undefined,
             model: undefined,
             structure: undefined,
-          preSelectMat: new MeshLambertMaterial({
+          invisibleMat: new MeshLambertMaterial({
             transparent: true,
             opacity: 0.6,
+            color: 0xff0000
+          }),
+          preSelectMat: new MeshLambertMaterial({
+            transparent: true,
+            opacity: 0.3,
             color: 0xff0000,
             depthTest: false,
           }),
           preSelectMatBlue: new MeshLambertMaterial({
             transparent: true,
-            opacity: 0.6,
+            opacity: 0.3,
             color: 0x00FFFF,
             depthTest: false,
           }),
+
         }
     },
     methods: {
@@ -57,31 +64,17 @@ export default {
             return relIDs;
         },
         getSensors: async function(relIDs, rooms, manager, modelID) {
-            if (relIDs.type === "IFCBUILDINGSTOREY") {
+            if (relIDs.type === "IFCSPACE") {
                 const sensorList = [];
                 rooms.push({roomId:relIDs.expressID, sensors:sensorList});
             }
             for (let component in relIDs.children) {
-                if (relIDs.type === "IFCBUILDINGSTOREY" && relIDs.children[component].type === "IFCFURNISHINGELEMENT") {
+                if (relIDs.type === "IFCSPACE" && relIDs.children[component].type === "IFCDISTRIBUTIONCONTROLELEMENT") {
                     const sensor = await manager.getItemProperties(modelID, relIDs.children[component].expressID);
                     rooms[rooms.length-1].sensors.push({sensorIFCid:relIDs.children[component].expressID, sensorDataSetId:sensor.Name.value});
                 }
                await this.getSensors(relIDs.children[component], rooms, manager, modelID);
             }
-        },
-        changeColor: function(relIDs, roomId, sensorId, material, manager, scene, modelID) {
-          for (let component in relIDs.children) {
-            if (relIDs.expressID === roomId && relIDs.children[component].type === "IFCSLAB") {
-              manager.createSubset({
-                modelID: modelID,
-                ids: [relIDs.children[component].expressID],
-                material: material,
-                scene: scene,
-                removePrevious: true,
-              });
-            }
-            this.changeColor(relIDs.children[component], roomId, sensorId, material, manager, scene, modelID);
-          }
         },
         start: function() {
           axios
@@ -124,11 +117,23 @@ export default {
             if (this.model === undefined) {
               return;
             }
-            const scene = this.viewer.context.getScene();
-            const manager = this.viewer.IFC.loader.ifcManager;
-            console.log(response["value"]);
-            this.changeColor(this.structure, 138, response["sensorIfcID"], response["value"] === 20 ? this.preSelectMat : this.preSelectMatBlue, manager, scene, this.model.modelID);
-          });
+            console.log(response["sensorIfcID"]);
+            if (response["sensorIfcID"] === 283) {
+              if (response["value"] === 20) {
+                changeColor(this.structure, 201, response["sensorIfcID"], this.preSelectMat, this.preSelectMatBlue, 1);
+              } else {
+                changeColor(this.structure, 201, response["sensorIfcID"], this.preSelectMatBlue, this.preSelectMat, 1);
+              }
+            }
+            if (response["sensorIfcID"] === 722) {
+              if (response["value"] === 20) {
+                changeColor(this.structure, 234, response["sensorIfcID"], this.preSelectMat, this.preSelectMatBlue, 2);
+              } else {
+                changeColor(this.structure, 234, response["sensorIfcID"], this.preSelectMatBlue, this.preSelectMat, 2);
+              }
+            }
+
+         });
 
           console.log("Successfully subscribed to the backend server...");
         };
@@ -144,6 +149,34 @@ export default {
 
         client.activate();
         this.client = client;
+
+      const changeColor = (relIDs, roomId, sensorId, material, previousMaterial, groupId) => {
+        const manager = this.viewer.IFC.loader.ifcManager;
+        manager.removeSubset(this.model.modelID, previousMaterial, groupId);
+        manager.createSubset({
+          modelID: this.model.modelID,
+          ids: [roomId],
+          material: material,
+          scene: this.viewer.context.getScene(),
+          removePrevious: false,
+          customID: groupId
+        });
+/*        for (let component in relIDs.children) {
+          if (relIDs.expressID === roomId && relIDs.children[component].type === "IFCSPACE") {
+            const manager = this.viewer.IFC.loader.ifcManager;
+            manager.removeSubset(this.model.modelID, previousMaterial, groupId);
+            manager.createSubset({
+              modelID: this.model.modelID,
+              ids: [relIDs.children[component].expressID],
+              material: material,
+              scene: this.viewer.context.getScene(),
+              removePrevious: false,
+              customID: groupId
+            });
+          }
+          changeColor(relIDs.children[component], roomId, sensorId, material, previousMaterial);
+        }*/
+      }
     },
     mounted() {
       const container = document.getElementById('model');
@@ -152,25 +185,67 @@ export default {
       viewer.axes.setAxes();
       viewer.grid.setGrid();
       viewer.IFC.setWasmPath('../IFCjs/');
+     // const ifcapi = new IfcAPI();
+/*      viewer.IFC.loader.ifcManager.parser.setupOptionalCategories({
+        [IFCSPACE]: false,
+        [IFCOPENINGELEMENT]: false
+      });*/
 
       const input = document.getElementById("file-input");
 
       input.addEventListener("change",
 
           async (changed) => {
+            //await ifcapi.Init();
             const file = changed.target.files[0];
             const ifcURL = URL.createObjectURL(file);
             const model = await viewer.IFC.loadIfcUrl(ifcURL);
             this.model = model;
             const structure = await this.showStructure(viewer, model.modelID);
             this.structure = structure;
-            console.log(await viewer.IFC.getAllItemsOfType(model.modelID, IFCSENSORTYPE, true));
+            console.log(await viewer.IFC.getProperties(model.modelID, 283, true));
+            const spaces = await viewer.IFC.getAllItemsOfType(model.modelID, IFCSPACE, true);
+            const manager = this.viewer.IFC.loader.ifcManager;
+            for (const space in spaces) {
+
+              //console.log(await ifcapi.GetGeometry(model.modelID, spaces[space]));
+              manager.createSubset({
+                modelID: this.model.modelID,
+                ids: [spaces[space]],
+                material: this.invisibleMat,
+                scene: this.viewer.context.getScene(),
+                removePrevious: false,
+              });
+            }
             let json = {rooms:[]};
-            await this.getSensors(structure, json.rooms, viewer.IFC.loader.ifcManager, model.modelID);
+            await this.getSensors(structure, json.rooms, manager, model.modelID);
             console.log(JSON.stringify(json));
+            //model.visible = false;
+
+            const modelCopy = new Mesh(
+                model.geometry,
+                new MeshLambertMaterial({
+                  transparent: true,
+                  opacity: 1,
+                  color: 0x77aaff,
+                })
+            );
+
+            const scene = this.viewer.context.getScene();
+
+            scene.add(model);
+            scene.add(modelCopy);
+/*            manager.createSubset({
+              modelID: this.model.modelID,
+              ids: [201],
+              material: this.preSelectMat,
+              scene: this.viewer.context.getScene(),
+              removePrevious: false,
+            });*/
             axios
                 .post('http://localhost:8082/api/rooms', json)
                 .then(response => (console.log(response)));
+
           },
 
           false

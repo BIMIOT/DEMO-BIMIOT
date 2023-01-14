@@ -14,7 +14,6 @@ COPY . .
 
 RUN npm run preserve
 
-
 # build app for production with minification
 RUN npm run build
 

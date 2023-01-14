@@ -207,7 +207,8 @@ export default {
       viewer.IFC.setWasmPath('../IFCjs/');
      // const ifcapi = new IfcAPI();
      viewer.IFC.loader.ifcManager.parser.setupOptionalCategories({
-        [IFCSPACE]: true,
+        [IFCSPACE]: 
+        ,
         [IFCOPENINGELEMENT]: false
       });
 
@@ -258,7 +259,7 @@ export default {
               modelID: model.modelID,
               ids: await viewer.IFC.loader.ifcManager.getAllItemsOfType(model.modelID,IFCSPACE,false),
               removePrevious: true,
-              material: this.invisibleMat,
+              material: this.sensorColor,
               customID:"stuff4"
             }
 

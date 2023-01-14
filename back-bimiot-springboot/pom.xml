@@ -8,13 +8,11 @@
         <version>3.0.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.example</groupId>
-    <artifactId>back-bimiot</artifactId>
+    <artifactId>BimIot-Back</artifactId>
+    <groupId>com.bimiot</groupId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>back-bimiot</name>
-    <description>back-bimiot</description>
     <properties>
-        <java.version>19</java.version>
+        <java.version>17</java.version>
     </properties>
     <dependencies>
         <dependency>

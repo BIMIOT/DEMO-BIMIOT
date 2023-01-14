@@ -6,6 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="BimIot-Back" />
         <module name="BimIot-Front" />
       </profile>
     </annotationProcessing>
@@ -14,5 +15,10 @@
       <module name="BimIot-Front" target="17" />
       <module name="DEMO-BIMIOT" target="17" />
     </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="BimIot-Back" options="-parameters" />
+    </option>
   </component>
 </project>

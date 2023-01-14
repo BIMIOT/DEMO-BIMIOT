@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:19-buster
 
 # make the 'app' folder the current working directory
 WORKDIR /vuejs-bimiot
@@ -17,5 +17,5 @@ RUN npm run preserve
 # build app for production with minification
 RUN npm run build
 
-EXPOSE 8081
+EXPOSE 8080
 CMD npm run serve

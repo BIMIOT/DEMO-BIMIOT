@@ -2,18 +2,18 @@ version: '3.9'
 services:
   back:
     build: BimIot-Back
-    image: springio/gs-spring-boot-docker
+    image: bimiotback:latest
     container_name: bimiot-backend
     ports:
-      - 8090:8090
+      - 8082:8082
     networks:
       - frontback
 
   front:
     build: BimIot-Front
-    image: vuejs/dockerize-vuejs-app
+    image: bimiotfront:latest
     ports:
-      - 8081:8081
+      - 8080:8080
     depends_on:
       - back
     networks:

@@ -1,5 +1,7 @@
 package com.example.backbimiot.pojo;
 
+import java.util.Objects;
+
 public class Sensor {
 
 
@@ -19,5 +21,18 @@ public class Sensor {
 
     public String getSensorIFCid() {
         return sensorIFCid;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Sensor sensor = (Sensor) o;
+        return Objects.equals(sensorDataSetId, sensor.sensorDataSetId) && Objects.equals(sensorIFCid, sensor.sensorIFCid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sensorDataSetId, sensorIFCid);
     }
 }

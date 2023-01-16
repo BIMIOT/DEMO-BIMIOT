@@ -14,11 +14,14 @@ import java.util.*;
 
 @Component
 public class Converter implements ApplicationListener<SimulatorEvent> {
-    record SensorByRoom(Sensor sensor, Room room) {}
+    public record SensorByRoom(Sensor sensor, Room room) {}
     private final HashMap<String, SensorByRoom> hashMap = new HashMap<>();
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
+    public Map<String, SensorByRoom> getSensorByRoom() {
+        return hashMap;
+    }
 
     private void setSensorsByRoom(List<Room> rooms) {
         rooms.forEach(r -> r.getSensors().forEach(s -> hashMap.put(s.getSensorDataSetId(), new SensorByRoom(s,r))));

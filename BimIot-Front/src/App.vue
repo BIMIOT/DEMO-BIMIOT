@@ -1,9 +1,3 @@
-<template>
-    <div id="app">
-        <Model></Model>
-    </div>
-</template>
-
 <script>
 import Model from './components/Model.vue'
 
@@ -17,6 +11,12 @@ export default {
     }
 }
 </script>
+
+<template>
+  <div id="app">
+    <Model />
+  </div>
+</template>
 
 <style>
 

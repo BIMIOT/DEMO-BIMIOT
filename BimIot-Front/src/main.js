@@ -1,12 +1,6 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import App from './App.vue'
-import vuetify from '@/plugins/vuetify'
 
-Vue.config.productionTip = false
+import './assets/main.css'
 
-export const bus = new Vue();
-
-new Vue({
-  vuetify,
-  render: h => h(App),
-}).$mount('#app')
+createApp(App).mount('#app')

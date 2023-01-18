@@ -7,12 +7,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="BimIot-Back" />
-        <module name="BimIot-Front" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="BimIot-Back" target="17" />
       <module name="BimIot-Front" target="17" />
+      <module name="BimIot-Front (1)" target="17" />
       <module name="DEMO-BIMIOT" target="17" />
     </bytecodeTargetLevel>
   </component>

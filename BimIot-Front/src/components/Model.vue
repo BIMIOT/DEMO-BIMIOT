@@ -4,9 +4,9 @@
         <input type="file" id="file-input" />
         <!--        <v-icon id="play" icon="mdi-play-circle" />-->
         <!--        <v-icon id="stop" icon="mdi-pause-circle" />-->
-        <v-btn id="play" v-on:click="start()" >Play</v-btn>
+        <button id="play" v-on:click="start()" >Play</button>
 
-        <v-btn id="stop" v-on:click="stop()">Stop</v-btn>
+        <button id="stop" v-on:click="stop()">Stop</button>
       </div>
 
       <p id="properties-text">
@@ -21,7 +21,7 @@
 import { IfcViewerAPI } from 'web-ifc-viewer';
 import { MeshLambertMaterial } from "three";
 import axios from 'axios';
-import * as SockJS from 'sockjs-client';
+import sockjs from "sockjs-client/dist/sockjs"
 import * as StompJs from '@stomp/stompjs';
 import { IFCSPACE,IFCSLAB,IFCOPENINGELEMENT, IFCDISTRIBUTIONCONTROLELEMENT, IFCWALLSTANDARDCASE } from 'web-ifc';
 import {IfcAPI} from "three/examples/jsm/loaders/ifc/web-ifc-api";
@@ -125,7 +125,7 @@ export default {
           // to be used for each (re)connect
           client.webSocketFactory = function () {
             // Note that the URL is different from the WebSocket URL
-            return new SockJS('http://localhost:8082/sensors-data-endpoint');
+            return new sockjs('http://localhost:8082/sensors-data-endpoint');
           };
         }
 

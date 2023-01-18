@@ -1,15 +1,14 @@
-# Vue IFC.js Example
+# bimiot-front
 
-A basic example for running IFC.js within Vue.
+This template should help get you started developing with Vue 3 in Vite.
 
-For more information about IFC.js, see the following link:
+## Recommended IDE Setup
 
-###### IFC.js
-https://https://ifcjs.github.io
+[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
 
-<p align="center">
-  <img width="75px" src="https://ifcjs.github.io/info/assets/images/logo-a326242dd945bcc271d193f7e6d2f054.png">
-</p>
+## Customize configuration
+
+See [Vite Configuration Reference](https://vitejs.dev/config/).
 
 ## Project setup
 
@@ -27,10 +26,14 @@ npm run preserve
 npm run serve
 ```
 
-### Docker use
+### Compile and Minify for Production
+
+```sh
+npm run build
 ```
-docker build -t vuejs-cookbook/dockerize-vuejs-app .
-```
-```
-docker run -it --network="host" --rm --name dockerize-vuejs-app-1 vuejs-cookbook/dockerize-vuejs-app
+
+### Run Unit Tests with [Vitest](https://vitest.dev/)
+
+```sh
+npm run test:unit
 ```
